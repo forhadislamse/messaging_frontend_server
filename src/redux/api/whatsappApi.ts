@@ -16,6 +16,14 @@ export const whatsappApi = baseApi.injectEndpoints({
       }),
       providesTags: ["whatsapp"],
     }),
+    getWhatsAppChatMessages: builder.query({
+      query: ({ chatId, limit }: { chatId: string, limit?: number }) => ({
+        url: `/whatsapp/chats/${chatId}/messages`,
+        method: "GET",
+        params: { limit },
+      }),
+      providesTags: ["whatsapp"],
+    }),
     logoutWhatsApp: builder.mutation({
       query: () => ({
         url: "/whatsapp/logout",
@@ -29,5 +37,6 @@ export const whatsappApi = baseApi.injectEndpoints({
 export const { 
   useGetWhatsAppStatusQuery, 
   useGetWhatsAppChatsQuery,
+  useGetWhatsAppChatMessagesQuery,
   useLogoutWhatsAppMutation 
 } = whatsappApi;
