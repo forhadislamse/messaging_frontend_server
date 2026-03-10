@@ -9,6 +9,13 @@ export const whatsappApi = baseApi.injectEndpoints({
       }),
       providesTags: ["example"], // Using existing tag or could add 'whatsapp'
     }),
+    getWhatsAppChats: builder.query({
+      query: () => ({
+        url: "/whatsapp/chats",
+        method: "GET",
+      }),
+      providesTags: ["whatsapp"],
+    }),
     logoutWhatsApp: builder.mutation({
       query: () => ({
         url: "/whatsapp/logout",
@@ -19,4 +26,8 @@ export const whatsappApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useGetWhatsAppStatusQuery, useLogoutWhatsAppMutation } = whatsappApi;
+export const { 
+  useGetWhatsAppStatusQuery, 
+  useGetWhatsAppChatsQuery,
+  useLogoutWhatsAppMutation 
+} = whatsappApi;
