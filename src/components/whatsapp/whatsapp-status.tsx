@@ -10,7 +10,7 @@ const WhatsAppStatus = () => {
     const [lastMessage, setLastMessage] = useState<any>(null);
 
     useEffect(() => {
-        const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
+        const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:13077';
         const socket: Socket = io(socketUrl);
 
         socket.on('whatsapp_status', (newStatus: string) => {

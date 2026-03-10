@@ -20,7 +20,7 @@ const WhatsAppPage = () => {
       <div className="bg-blue-50 dark:bg-blue-900/10 border-l-4 border-blue-500 p-6 rounded-r-xl shadow-sm">
         <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-2">Instructions</h3>
         <ul className="list-disc list-inside space-y-2 text-blue-700/80 dark:text-blue-400/80">
-          <li>Ensure the backend server is running and accessible at <code>http://localhost:5000</code>.</li>
+          <li>Ensure the backend server is running and accessible at <code>http://localhost:13077</code>.</li>
           <li>If the status shows <strong>INITIALIZING</strong>, wait a few seconds for the client to start.</li>
           <li>If a <strong>QR Code</strong> appears, scan it using the "Linked Devices" feature in your WhatsApp mobile app.</li>
           <li>Once connected, the status will change to <strong>READY</strong> and you can start sending messages via the API.</li>
