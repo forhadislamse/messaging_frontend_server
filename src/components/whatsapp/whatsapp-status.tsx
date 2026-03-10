@@ -238,7 +238,7 @@ const WhatsAppStatus = () => {
                                 <MdChat size={40} className="opacity-20" />
                             </div>
                             <div className="text-center">
-                                <h3 className="text-lg font-bold text-gray-600 dark:text-gray-300">WhatsApp Web Clone</h3>
+                                <h3 className="text-lg font-bold text-gray-600 dark:text-gray-300"></h3>
                                 <p className="text-xs opacity-60">Select a chat to start monitoring messages</p>
                             </div>
                         </div>

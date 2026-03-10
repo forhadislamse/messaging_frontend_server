@@ -23,10 +23,10 @@ const WhatsAppPage = () => {
             </div>
           </div>
           <div className="hidden md:flex flex-col items-end">
-             <div className="px-4 py-2 bg-white dark:bg-[#202c33] rounded-full border dark:border-gray-800 shadow-sm flex items-center gap-2">
+             {/* <div className="px-4 py-2 bg-white dark:bg-[#202c33] rounded-full border dark:border-gray-800 shadow-sm flex items-center gap-2">
                 <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                 <span className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase tracking-widest">System Cloud Node: Active</span>
-             </div>
+             </div> */}
           </div>
         </header>
 
