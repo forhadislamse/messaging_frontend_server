@@ -10,6 +10,7 @@ interface Message {
   from: string;
   body: string;
   timestamp: number;
+  fromMe?: boolean;
 }
 
 const WhatsAppStatus = () => {
@@ -157,15 +158,15 @@ const WhatsAppStatus = () => {
                         </div>
                     ) : (
                         messages.map((msg, i) => (
-                            <div key={i} className="flex flex-col animate-in slide-in-from-left duration-300">
-                                <div className="max-w-[85%] self-start bg-white dark:bg-[#1f2c33] p-3 rounded-tr-xl rounded-br-xl rounded-bl-xl shadow-sm border-l-4 border-[#25D366]">
+                            <div key={i} className={`flex flex-col animate-in ${msg.fromMe ? 'slide-in-from-right' : 'slide-in-from-left'} duration-300`}>
+                                <div className={`max-w-[85%] ${msg.fromMe ? 'self-end bg-[#d9fdd3] dark:bg-[#005c4b] rounded-tl-xl rounded-tr-none' : 'self-start bg-white dark:bg-[#1f2c33] rounded-tr-xl rounded-tl-none'} p-3 rounded-br-xl rounded-bl-xl shadow-sm border-l-4 ${msg.fromMe ? 'border-[#34b7f1]' : 'border-[#25D366]'}`}>
                                     <div className="flex justify-between items-center gap-4 mb-1">
-                                        <span className="text-[10px] font-bold text-[#25D366] truncate">
-                                            {msg.from.split('@')[0]}
+                                        <span className={`text-[10px] font-bold ${msg.fromMe ? 'text-[#34b7f1]' : 'text-[#25D366]'} truncate`}>
+                                            {msg.fromMe ? 'You' : msg.from.split('@')[0]}
                                         </span>
                                         <span className="text-[9px] text-gray-400 shrink-0">{new Date(msg.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                     </div>
-                                    <p className="text-[13px] text-gray-700 dark:text-gray-200 leading-snug whitespace-pre-wrap">{msg.body}</p>
+                                    <p className={`text-[13px] ${msg.fromMe ? 'text-gray-800 dark:text-gray-100' : 'text-gray-700 dark:text-gray-200'} leading-snug whitespace-pre-wrap`}>{msg.body}</p>
                                 </div>
                             </div>
                         ))
