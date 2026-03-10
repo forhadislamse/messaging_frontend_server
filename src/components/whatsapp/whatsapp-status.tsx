@@ -6,7 +6,7 @@ import { io, Socket } from 'socket.io-client';
 import Image from 'next/image';
 import { IoLogoWhatsapp, IoMdLogOut, IoMdCheckmarkCircle, IoMdArrowRoundBack } from 'react-icons/io';
 import {  MdSync, MdGroups, MdPerson, MdChat } from 'react-icons/md';
-import { useLogoutWhatsAppMutation, useGetWhatsAppStatusQuery, useGetWhatsAppChatsQuery, useGetWhatsAppChatMessagesQuery } from '@/redux/api/whatsappApi';
+import { useLogoutWhatsAppMutation, useGetWhatsAppStatusQuery, useGetWhatsAppChatsQuery, useGetWhatsAppChatMessagesQuery, useSendMessageMutation } from '@/redux/api/whatsappApi';
 import { toast } from 'sonner';
 
 interface Message {
@@ -34,6 +34,8 @@ const WhatsAppStatus = () => {
     const [qrCode, setQrCode] = useState<string | null>(null);
     const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
+    const [messageInput, setMessageInput] = useState<string>('');
+    const [socket, setSocket] = useState<Socket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // RTK Query Hooks
@@ -50,6 +52,7 @@ const WhatsAppStatus = () => {
     );
 
     const [logoutWhatsApp, { isLoading: isLoggingOut }] = useLogoutWhatsAppMutation();
+    const [sendMessageMutation] = useSendMessageMutation();
 
     useEffect(() => {
         if (initialStatusData?.success) {
@@ -69,24 +72,22 @@ const WhatsAppStatus = () => {
 
     useEffect(() => {
         const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:13077';
-        const socket: Socket = io(socketUrl);
+        const s: Socket = io(socketUrl);
+        setSocket(s);
 
-        socket.on('whatsapp_status', (newStatus: string) => {
+        s.on('whatsapp_status', (newStatus: string) => {
             setStatus(newStatus);
             if (newStatus === 'READY') {
                 setQrCode(null);
             }
         });
 
-        socket.on('whatsapp_qr', (qr: string) => {
+        s.on('whatsapp_qr', (qr: string) => {
             setQrCode(qr);
             setStatus('AUTHENTICATING');
         });
 
-        socket.on('whatsapp_message_received', (message: Message) => {
-            // Append message if it belongs to the selected chat
-            // In WhatsApp, 'from' is the sender. For groups, it's the group JID.
-            // For personal chats, it's the user JID.
+        s.on('whatsapp_message_received', (message: Message) => {
             if (selectedChat) {
                 const isFromSelected = message.from === selectedChat.id || (message.fromMe && message.to === selectedChat.id);
                 if (isFromSelected) {
@@ -96,7 +97,7 @@ const WhatsAppStatus = () => {
         });
 
         return () => {
-            socket.disconnect();
+            s.disconnect();
         };
     }, [selectedChat]);
 
@@ -121,6 +122,30 @@ const WhatsAppStatus = () => {
         }
     };
 
+    const handleSendMessage = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!messageInput.trim() || !selectedChat) return;
+
+        const payload = {
+            phoneNumber: selectedChat.id.split('@')[0],
+            message: messageInput.trim()
+        };
+
+        try {
+            // Priority: Send via Socket for low latency, fallback to Mutation
+            if (socket?.connected) {
+                socket.emit('send_message', payload);
+            } else {
+                await sendMessageMutation(payload).unwrap();
+            }
+            
+            setMessageInput('');
+        } catch (error) {
+            console.error('Failed to send message:', error);
+            toast.error('Failed to send message');
+        }
+    };
+
     const formatTimestamp = (ts: number) => {
         const date = new Date(ts * 1000);
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -134,10 +159,10 @@ const WhatsAppStatus = () => {
                 <div className={`${selectedChat ? 'hidden lg:flex' : 'flex'} lg:w-1/3 flex flex-col gap-4 h-full min-h-0`}>
                     {/* Status Card */}
                     <div className="bg-white dark:bg-[#1f2c33] rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden shrink-0">
-                        <div className="bg-[#075e54] p-4 text-white flex items-center justify-between">
+                        <div className="bg-[#00a884] p-4 text-white flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <IoLogoWhatsapp size={24} />
-                                <h2 className="font-bold">Status</h2>
+                                <h2 className="font-bold text-sm">WhatsApp Client</h2>
                             </div>
                             <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest ${
                                 status === 'READY' ? 'bg-[#25D366] text-white shadow-[0_0_10px_rgba(37,211,102,0.3)]' : 
@@ -156,7 +181,7 @@ const WhatsAppStatus = () => {
                                         </div>
                                         <div className="text-left">
                                             <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 leading-tight">Connected</h3>
-                                            <p className="text-[10px] text-gray-500">System is live</p>
+                                            <p className="text-[10px] text-gray-500">Live & Ready</p>
                                         </div>
                                     </div>
                                     <button 
@@ -189,7 +214,7 @@ const WhatsAppStatus = () => {
                     {/* Chat/Group List Sidebar */}
                     <div className="flex-1 flex flex-col bg-white dark:bg-[#111b21] rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden min-h-0">
                         <div className="bg-[#f0f2f5] dark:bg-[#202c33] p-3 border-b dark:border-gray-800 flex items-center justify-between shrink-0">
-                            <h3 className="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Chats & Groups</h3>
+                            <h3 className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Chats</h3>
                             {isLoadingChats && <MdSync className="text-gray-400 animate-spin-slow" size={14} />}
                         </div>
                         
@@ -201,26 +226,30 @@ const WhatsAppStatus = () => {
                                 </div>
                             ) : chatsData?.data?.length === 0 ? (
                                 <div className="h-full flex items-center justify-center text-gray-400 text-xs italic p-4 text-center">
-                                    Fetching chats... If empty, send a message from your phone.
+                                    Fetching chats...
                                 </div>
                             ) : (
                                 chatsData?.data?.map((chat: Chat) => (
                                     <div 
                                         key={chat.id} 
                                         onClick={() => setSelectedChat(chat)}
-                                        className={`p-3 border-b dark:border-gray-800/50 hover:bg-[#f5f6f6] dark:hover:bg-[#2a3942] transition-colors cursor-pointer group ${selectedChat?.id === chat.id ? 'bg-[#f0f2f5] dark:bg-[#2a3942] border-l-4 border-l-[#25D366]' : ''}`}
+                                        className={`p-3 border-b dark:border-gray-800/50 hover:bg-[#f5f6f6] dark:hover:bg-[#2a3942] transition-all cursor-pointer group ${selectedChat?.id === chat.id ? 'bg-[#f0f2f5] dark:bg-[#2a3942] border-l-4 border-l-[#00a884]' : ''}`}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${chat.isGroup ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-500' : 'bg-green-50 dark:bg-green-900/30 text-[#25D366]'}`}>
-                                                {chat.isGroup ? <MdGroups size={22} /> : <MdPerson size={22} />}
+                                            <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${chat.isGroup ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-500' : 'bg-gray-100 dark:bg-gray-800 text-gray-400'}`}>
+                                                {chat.isGroup ? <MdGroups size={24} /> : <MdPerson size={24} />}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex justify-between items-center mb-0.5">
-                                                    <h4 className={`text-sm font-bold truncate pr-1 transition-colors ${selectedChat?.id === chat.id ? 'text-[#25D366]' : 'text-gray-800 dark:text-gray-100'}`}>{chat.name}</h4>
-                                                    <span className="text-[9px] text-gray-400">{chat.lastMessage ? formatTimestamp(chat.lastMessage.timestamp) : ''}</span>
+                                                    <h4 className={`text-sm font-bold truncate pr-1 transition-colors ${selectedChat?.id === chat.id ? 'text-[#00a884]' : 'text-gray-800 dark:text-gray-100'}`}>{chat.name}</h4>
+                                                    <span className="text-[10px] text-gray-400">{chat.lastMessage ? formatTimestamp(chat.lastMessage.timestamp) : ''}</span>
                                                 </div>
-                                                <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate leading-tight">
-                                                    {chat.lastMessage ? chat.lastMessage.body : 'No activity'}
+                                                <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate leading-tight flex items-center gap-1">
+                                                    {chat.lastMessage ? (
+                                                        <>
+                                                            {chat.lastMessage.body}
+                                                        </>
+                                                    ) : 'No typical messages'}
                                                 </p>
                                             </div>
                                         </div>
@@ -234,13 +263,14 @@ const WhatsAppStatus = () => {
                 {/* Right Section: Selected Chat Messages */}
                 <div className={`${!selectedChat ? 'hidden lg:flex' : 'flex'} flex-1 flex flex-col bg-white dark:bg-[#111b21] rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden h-full min-h-0`}>
                     {!selectedChat ? (
-                        <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-4 bg-[#f8f9fa] dark:bg-[#222e35]">
-                            <div className="w-20 h-20 bg-gray-200 dark:bg-gray-800 rounded-full flex items-center justify-center">
-                                <MdChat size={40} className="opacity-20" />
+                        <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-4 bg-[#f8f9fa] dark:bg-[#222e35] relative">
+                            <div className="absolute top-0 w-full h-1.5 bg-[#00a884]"></div>
+                            <div className="w-24 h-24 bg-gray-200 dark:bg-gray-800 rounded-full flex items-center justify-center shadow-inner">
+                                <IoLogoWhatsapp size={48} className="text-[#00a884] opacity-20" />
                             </div>
-                            <div className="text-center">
-                                <h3 className="text-lg font-bold text-gray-600 dark:text-gray-300"></h3>
-                                <p className="text-xs opacity-60">Select a chat to start monitoring messages</p>
+                            <div className="text-center max-w-sm px-6">
+                                {/* <h3 className="text-xl font-bold text-gray-600 dark:text-gray-300">WhatsApp Web Clone</h3> */}
+                                <p className="text-xs opacity-60 mt-2">Send and receive messages without keeping your phone online. Use the sidebar to select a conversation.</p>
                             </div>
                         </div>
                     ) : (
@@ -251,14 +281,14 @@ const WhatsAppStatus = () => {
                                     <button onClick={() => setSelectedChat(null)} className="lg:hidden p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full">
                                         <IoMdArrowRoundBack size={20} />
                                     </button>
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${selectedChat.isGroup ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-500' : 'bg-green-100 dark:bg-green-900/30 text-[#25D366]'}`}>
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${selectedChat.isGroup ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-500' : 'bg-gray-100 dark:bg-gray-800 text-gray-400'}`}>
                                         {selectedChat.isGroup ? <MdGroups size={24} /> : <MdPerson size={24} />}
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-gray-800 dark:text-white leading-tight">{selectedChat.name}</h3>
-                                        <span className="text-[10px] text-green-500 flex items-center gap-1 font-medium italic">
+                                        <h3 className="font-bold text-sm text-gray-800 dark:text-white leading-tight">{selectedChat.name}</h3>
+                                        <span className="text-[10px] text-green-500 flex items-center gap-1 font-medium">
                                             <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                                            {selectedChat.isGroup ? 'Group Stream' : 'Private Stream'}
+                                            Online Stream
                                         </span>
                                     </div>
                                 </div>
@@ -268,27 +298,57 @@ const WhatsAppStatus = () => {
                             </div>
 
                             {/* Message Stream */}
-                            <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar bg-[#efeae2] dark:bg-opacity-5 dark:bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-repeat min-h-0">
+                            <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar bg-[#efeae2] dark:bg-opacity-5 dark:bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-repeat min-h-0">
                                 {messages.length === 0 && !isFetchingHistory ? (
                                     <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-2 opacity-50">
-                                        <p className="text-xs italic bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm">No recent messages in this chat</p>
+                                        <p className="text-[10px] font-bold bg-[#dcf8c6] dark:bg-[#005c4b] text-gray-700 dark:text-white px-4 py-1.5 rounded-lg shadow-sm uppercase tracking-widest">End-to-End Encrypted</p>
                                     </div>
                                 ) : (
                                     messages.map((msg, i) => (
-                                        <div key={i} className={`flex flex-col animate-in ${msg.fromMe ? 'slide-in-from-right' : 'slide-in-from-left'} duration-300`}>
-                                            <div className={`max-w-[85%] ${msg.fromMe ? 'self-end bg-[#d9fdd3] dark:bg-[#005c4b] rounded-tl-xl rounded-tr-none' : 'self-start bg-white dark:bg-[#1f2c33] rounded-tr-xl rounded-tl-none'} p-2.5 rounded-br-xl rounded-bl-xl shadow-sm border-l-4 ${msg.fromMe ? 'border-[#34b7f1]' : 'border-[#25D366]'}`}>
-                                                <div className="flex justify-between items-center gap-4 mb-0.5">
-                                                    <span className={`text-[9px] font-bold ${msg.fromMe ? 'text-[#34b7f1]' : 'text-[#25D366]'} truncate`}>
-                                                        {msg.fromMe ? 'You' : msg.from.split('@')[0]}
+                                        <div key={i} className={`flex ${msg.fromMe ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-1 duration-200`}>
+                                            <div className={`max-w-[70%] px-3 py-1.5 rounded-lg shadow-sm relative group ${
+                                                msg.fromMe 
+                                                ? 'bg-[#d9fdd3] dark:bg-[#005c4b] rounded-tr-none' 
+                                                : 'bg-white dark:bg-[#1f2c33] rounded-tl-none'
+                                            }`}>
+                                                {!msg.fromMe && !selectedChat.isGroup && (
+                                                    <div className="text-[10px] font-bold text-[#00a884] mb-0.5">{selectedChat.name}</div>
+                                                )}
+                                                <p className="text-[13px] text-gray-800 dark:text-gray-100 leading-normal break-words">{msg.body}</p>
+                                                <div className="flex justify-end items-center gap-1 mt-1">
+                                                    <span className="text-[9px] text-gray-500 dark:text-gray-400 opacity-70">
+                                                        {formatTimestamp(msg.timestamp)}
                                                     </span>
-                                                    <span className="text-[8px] text-gray-400 shrink-0">{formatTimestamp(msg.timestamp)}</span>
                                                 </div>
-                                                <p className={`text-[12.5px] ${msg.fromMe ? 'text-gray-800 dark:text-gray-100' : 'text-gray-700 dark:text-gray-200'} leading-snug whitespace-pre-wrap`}>{msg.body}</p>
                                             </div>
                                         </div>
                                     ))
                                 )}
                                 <div ref={messagesEndRef} />
+                            </div>
+
+                            {/* Message Input Footer */}
+                            <div className="bg-[#f0f2f5] dark:bg-[#202c33] p-3 shrink-0">
+                                <form onSubmit={handleSendMessage} className="flex items-center gap-3">
+                                    <input 
+                                        type="text"
+                                        value={messageInput}
+                                        onChange={(e) => setMessageInput(e.target.value)}
+                                        placeholder="Type a message"
+                                        className="flex-1 bg-white dark:bg-[#2a3942] dark:text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#00a884] shadow-sm transition-all"
+                                    />
+                                    <button 
+                                        type="submit"
+                                        disabled={!messageInput.trim()}
+                                        className={`p-2.5 rounded-full transition-all flex items-center justify-center ${
+                                            messageInput.trim() 
+                                            ? 'bg-[#00a884] text-white hover:bg-[#008f72] shadow-md' 
+                                            : 'bg-gray-200 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
+                                        }`}
+                                    >
+                                        <IoLogoWhatsapp size={22} className={messageInput.trim() ? 'animate-in zoom-in' : ''} />
+                                    </button>
+                                </form>
                             </div>
                         </>
                     )}

@@ -24,6 +24,14 @@ export const whatsappApi = baseApi.injectEndpoints({
       }),
       providesTags: ["whatsapp"],
     }),
+    sendMessage: builder.mutation({
+      query: (body: { phoneNumber: string, message: string }) => ({
+        url: "/whatsapp/send-message",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["whatsapp"],
+    }),
     logoutWhatsApp: builder.mutation({
       query: () => ({
         url: "/whatsapp/logout",
@@ -38,5 +46,6 @@ export const {
   useGetWhatsAppStatusQuery, 
   useGetWhatsAppChatsQuery,
   useGetWhatsAppChatMessagesQuery,
+  useSendMessageMutation,
   useLogoutWhatsAppMutation 
 } = whatsappApi;
