@@ -1,11 +1,7 @@
-import HomeComponent from "@/components/pages/home/HomeComponent";
+import { redirect } from "next/navigation";
 
 const HomePage = () => {
-  return (
-    <>
-      <HomeComponent />
-    </>
-  );
+  redirect("/whatsapp");
 };
 
 export default HomePage;
