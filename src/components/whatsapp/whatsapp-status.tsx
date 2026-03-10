@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import Image from 'next/image';
-import { IoLogoWhatsapp, IoMdLogOut, IoMdCheckmarkCircle, IoMdInformationCircle, IoMdArrowRoundBack } from 'react-icons/io';
-import { MdQrCodeScanner, MdSync, MdMessage, MdGroups, MdPerson, MdChat } from 'react-icons/md';
+import { IoLogoWhatsapp, IoMdLogOut, IoMdCheckmarkCircle, IoMdArrowRoundBack } from 'react-icons/io';
+import {  MdSync, MdGroups, MdPerson, MdChat } from 'react-icons/md';
 import { useLogoutWhatsAppMutation, useGetWhatsAppStatusQuery, useGetWhatsAppChatsQuery, useGetWhatsAppChatMessagesQuery } from '@/redux/api/whatsappApi';
 import { toast } from 'sonner';
 
