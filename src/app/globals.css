@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+@theme {
+  --color-blue-primary: #3257d9;
+  --color-blue-secondary: #f2f4ff;
+
+  /* add breakpoint */
+  --breakpoint-xs: 540px;
+}
