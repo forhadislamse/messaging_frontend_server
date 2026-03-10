@@ -5,6 +5,8 @@ import { io, Socket } from 'socket.io-client';
 import Image from 'next/image';
 import { IoLogoWhatsapp, IoMdLogOut, IoMdCheckmarkCircle, IoMdInformationCircle } from 'react-icons/io';
 import { MdQrCodeScanner, MdSync, MdMessage } from 'react-icons/md';
+import { useLogoutWhatsAppMutation, useGetWhatsAppStatusQuery } from '@/redux/api/whatsappApi';
+import { toast } from 'sonner';
 
 interface Message {
   from: string;
@@ -17,9 +19,21 @@ const WhatsAppStatus = () => {
     const [status, setStatus] = useState<string>('INITIALIZING');
     const [qrCode, setQrCode] = useState<string | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
-    const [loading, setLoading] = useState<boolean>(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    // RTK Query Hooks
+    const { data: initialStatusData } = useGetWhatsAppStatusQuery({});
+    const [logoutWhatsApp, { isLoading: isLoggingOut }] = useLogoutWhatsAppMutation();
+
+    useEffect(() => {
+        // Set initial status from RTK Query if available
+        if (initialStatusData?.success) {
+            setStatus(initialStatusData.data.status);
+            if (initialStatusData.data.qrCode) {
+                setQrCode(initialStatusData.data.qrCode);
+            }
+        }
+    }, [initialStatusData]);
     useEffect(() => {
         const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:13077';
         const socket: Socket = io(socketUrl);
@@ -51,15 +65,18 @@ const WhatsAppStatus = () => {
 
     const handleLogout = async () => {
         if (!confirm('Are you sure you want to disconnect?')) return;
-        setLoading(true);
+        
         try {
-            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:13077/api/v1/';
-            await fetch(`${baseUrl}whatsapp/logout`, { method: 'POST' });
-            setMessages([]);
+            const res: any = await logoutWhatsApp({}).unwrap();
+            if (res.success) {
+                setStatus('INITIALIZING');
+                setQrCode(null);
+                setMessages([]);
+                toast.success('Disconnected successfully');
+            }
         } catch (error) {
             console.error('Logout failed:', error);
-        } finally {
-            setLoading(false);
+            toast.error('Failed to disconnect');
         }
     };
 
@@ -91,11 +108,11 @@ const WhatsAppStatus = () => {
                                 <p className="text-gray-500 dark:text-gray-400 px-4">Your account is connected and ready to send/receive messages.</p>
                                 <button 
                                     onClick={handleLogout}
-                                    disabled={loading}
+                                    disabled={isLoggingOut}
                                     className="mt-4 flex items-center gap-2 mx-auto bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 px-6 py-2 rounded-xl text-sm font-semibold transition-all border border-red-100 dark:border-red-900/30"
                                 >
                                     <IoMdLogOut size={18} />
-                                    {loading ? 'Disconnecting...' : 'Disconnect Account'}
+                                    {isLoggingOut ? 'Disconnecting...' : 'Disconnect Account'}
                                 </button>
                             </div>
                         ) : qrCode && status === 'AUTHENTICATING' ? (
@@ -144,7 +161,7 @@ const WhatsAppStatus = () => {
                             <h3 className="font-bold text-gray-800 dark:text-white">Live Message Stream</h3>
                             <span className="text-[10px] text-green-500 flex items-center gap-1 font-medium italic">
                                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                                monitoring incoming events
+                                monitoring incoming-outgoing events
                             </span>
                         </div>
                     </div>
@@ -154,7 +171,7 @@ const WhatsAppStatus = () => {
                     {messages.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-2 opacity-50">
                             <MdMessage size={48} />
-                            <p className="text-sm italic">Waiting for incoming messages...</p>
+                            <p className="text-sm italic">Waiting for incoming-outgoing messages...</p>
                         </div>
                     ) : (
                         messages.map((msg, i) => (

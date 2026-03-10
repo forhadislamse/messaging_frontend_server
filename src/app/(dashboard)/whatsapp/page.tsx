@@ -37,12 +37,12 @@ const WhatsAppPage = () => {
 
         {/* Dynamic Footer Info */}
         <footer className="pt-10 border-t border-gray-200 dark:border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">
-           <div>© 2026 MESSAGING CORE v1.0.0</div>
-           <div className="flex gap-6 uppercase">
+           <div>© 2026 MESSAGING SYSTEM LLC. All rights reserved.</div>
+           {/* <div className="flex gap-6 uppercase">
               <span className="hover:text-[#25D366] cursor-pointer transition-colors">Documentation</span>
               <span className="hover:text-[#25D366] cursor-pointer transition-colors">API Keys</span>
               <span className="hover:text-[#25D366] cursor-pointer transition-colors">Support</span>
-           </div>
+           </div> */}
         </footer>
       </div>
     </div>
