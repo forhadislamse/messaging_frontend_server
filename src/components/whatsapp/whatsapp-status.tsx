@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import Image from 'next/image';
 import { IoLogoWhatsapp, IoMdLogOut, IoMdCheckmarkCircle, IoMdArrowRoundBack, IoMdSend, IoMdRefresh } from 'react-icons/io';
-import {  MdSync, MdGroups, MdPerson, MdChat } from 'react-icons/md';
+import {  MdSync, MdGroups, MdPerson } from 'react-icons/md';
 import { useLogoutWhatsAppMutation, useGetWhatsAppStatusQuery, useGetWhatsAppChatsQuery, useGetWhatsAppChatMessagesQuery, useSendMessageMutation } from '@/redux/api/whatsappApi';
 import { toast } from 'sonner';
 
@@ -73,7 +73,7 @@ const WhatsAppStatus = () => {
     }, [historyData, selectedChat]);
 
     useEffect(() => {
-        const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:13077';
+        const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'https://messaging-backend-server.vercel.app/';
         const s: Socket = io(socketUrl);
         setSocket(s);
 
