@@ -15,7 +15,7 @@ const WhatsAppPage = () => {
             </div>
             <div>
               <h1 className="text-3xl md:text-4xl font-black tracking-tight text-gray-900 dark:text-white">
-                WhatsApp <span className="text-[#25D366]">Control</span>
+                WhatsApp <span className="text-[#25D366]">messaging</span>
               </h1>
               <p className="text-gray-500 dark:text-gray-400 font-medium truncate max-w-[300px] md:max-w-none">
                 Enterprise messaging & real-time event monitoring system

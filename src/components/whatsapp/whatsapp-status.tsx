@@ -297,7 +297,7 @@ const WhatsAppStatus = () => {
                                 <IoLogoWhatsapp size={48} className="text-[#00a884] opacity-20" />
                             </div>
                             <div className="text-center max-w-sm px-6">
-                                <h3 className="text-xl font-bold text-gray-600 dark:text-gray-300">WhatsApp Web Clone</h3>
+                                {/* <h3 className="text-xl font-bold text-gray-600 dark:text-gray-300">WhatsApp Web Clone</h3> */}
                                 <p className="text-xs opacity-60 mt-2">Send and receive messages without keeping your phone online. Use the sidebar to select a conversation.</p>
                             </div>
                         </div>
