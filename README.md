@@ -1,8 +1,8 @@
 # Messaging Application Frontend (WhatsApp Connector)
 
-A modern, responsive messaging application frontend built with **Next.js 15+** and **Tailwind CSS 4**. This project provides a robust interface for managing WhatsApp connections, viewing chats, and sending real-time messages.
+A modern, responsive messaging application frontend built with **Next.js 16** and **Tailwind CSS 4**. This project provides a robust interface for managing WhatsApp connections, viewing chats, and sending real-time messages.
 
-## 🚀 Features
+##  Features
 
 - **Authentication**: Secure user login and registration powered by **NextAuth.js**.
 - **WhatsApp Integration**:
@@ -14,9 +14,9 @@ A modern, responsive messaging application frontend built with **Next.js 15+** a
 - **Real-time Communication**: Integrated with **Socket.io** for live updates.
 - **Modern UI**: Styled with **Tailwind CSS 4** for a premium, responsive look.
 
-## 🛠 Tech Stack
+## Tech Stack
 
-- **Framework**: [Next.js 15.3.1+](https://nextjs.org/) (App Router)
+- **Framework**: [Next.js 16.1.6](https://nextjs.org/) (App Router)
 - **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
 - **State Management**: [Redux Toolkit](https://redux-toolkit.js.org/)
 - **Data Fetching**: [RTK Query](https://redux-toolkit.js.org/rtk-query/overview)
@@ -24,7 +24,7 @@ A modern, responsive messaging application frontend built with **Next.js 15+** a
 - **Icons**: [React Icons](https://react-icons.github.io/react-icons/)
 - **Animations**: [Framer Motion](https://www.framer.com/motion/) & [Lottie](https://airbnb.io/lottie/)
 
-## 🏁 Getting Started
+##  Getting Started
 
 ### Prerequisites
 
@@ -49,8 +49,8 @@ A modern, responsive messaging application frontend built with **Next.js 15+** a
 3.  Configure Environment Variables:
     Create a `.env` file in the root directory:
     ```env
-    NEXT_PUBLIC_BASE_URL=https://your-backend-api.vercel.app/api/v1/
-    NEXT_PUBLIC_SOCKET_URL=https://your-backend-api.vercel.app
+    NEXT_PUBLIC_BASE_URL=http://localhost:13077/api/v1/
+    NEXT_PUBLIC_SOCKET_URL=http://localhost:13077
     ```
 
 ### Running Locally
@@ -58,23 +58,15 @@ A modern, responsive messaging application frontend built with **Next.js 15+** a
 ```bash
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) to see the application.
+Open [http://localhost:3000/whatsapp](http://localhost:3000/whatsapp) to see the application.
 
-## 📦 Scripts
+## Scripts
 
 - `npm run dev`: Starts the development server with Turbopack.
 - `npm run build`: Creates an optimized production build.
 - `npm start`: Starts the production server.
 - `npm run lint`: Runs ESLint for code quality checks.
 
-## 🌐 Deployment
-
-The project is optimized for deployment on the **Vercel Platform**. 
-
-1. Push your changes to GitHub.
-2. Link your repository to Vercel.
-3. Add the `NEXT_PUBLIC_BASE_URL` and `NEXT_PUBLIC_SOCKET_URL` environment variables in the Vercel Dashboard.
-4. Vercel will automatically build and deploy the application.
 
 ---
 Developed by [Muhammad Forhad](https://github.com/forhadislamse)
