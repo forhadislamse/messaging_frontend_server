@@ -73,7 +73,7 @@ const WhatsAppStatus = () => {
     }, [historyData, selectedChat]);
 
     useEffect(() => {
-        const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'https://messaging-backend-server.onrender.com';
+        const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'https://messagingbackendserver-production.up.railway.app';
         const s: Socket = io(socketUrl);
         setSocket(s);
 
