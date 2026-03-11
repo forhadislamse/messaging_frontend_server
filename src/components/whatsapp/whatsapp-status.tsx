@@ -4,17 +4,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import Image from 'next/image';
-import { IoLogoWhatsapp, IoMdLogOut, IoMdCheckmarkCircle, IoMdArrowRoundBack, IoMdSend } from 'react-icons/io';
+import { IoLogoWhatsapp, IoMdLogOut, IoMdCheckmarkCircle, IoMdArrowRoundBack, IoMdSend, IoMdRefresh } from 'react-icons/io';
 import {  MdSync, MdGroups, MdPerson, MdChat } from 'react-icons/md';
 import { useLogoutWhatsAppMutation, useGetWhatsAppStatusQuery, useGetWhatsAppChatsQuery, useGetWhatsAppChatMessagesQuery, useSendMessageMutation } from '@/redux/api/whatsappApi';
 import { toast } from 'sonner';
 
 interface Message {
+  id?: string;
   from: string;
   to: string;
   body: string;
   timestamp: number;
   fromMe?: boolean;
+  type?: string;
 }
 
 interface Chat {
@@ -39,9 +41,9 @@ const WhatsAppStatus = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // RTK Query Hooks
-    const { data: initialStatusData } = useGetWhatsAppStatusQuery({});
-    const { data: chatsData, isLoading: isLoadingChats } = useGetWhatsAppChatsQuery({}, {
-        pollingInterval: 10000,
+    const { data: initialStatusData, refetch: refetchStatus } = useGetWhatsAppStatusQuery({});
+    const { data: chatsData, isLoading: isLoadingChats, refetch: refetchChats } = useGetWhatsAppChatsQuery({}, {
+        pollingInterval: 15000,
         skip: status !== 'READY'
     });
     
@@ -76,22 +78,33 @@ const WhatsAppStatus = () => {
         setSocket(s);
 
         s.on('whatsapp_status', (newStatus: string) => {
+            console.log('[Socket] WhatsApp Status:', newStatus);
             setStatus(newStatus);
             if (newStatus === 'READY') {
                 setQrCode(null);
+                refetchChats();
             }
         });
 
         s.on('whatsapp_qr', (qr: string) => {
+            console.log('[Socket] WhatsApp QR Received');
             setQrCode(qr);
             setStatus('AUTHENTICATING');
         });
 
         s.on('whatsapp_message_received', (message: Message) => {
             if (selectedChat) {
-                const isFromSelected = message.from === selectedChat.id || (message.fromMe && message.to === selectedChat.id);
-                if (isFromSelected) {
-                    setMessages(prev => [...prev, message]);
+                // If message is for CURRENT chat (whether from other person OR from me to them)
+                const isRelevant = 
+                    (message.from === selectedChat.id) || // Incoming to current chat
+                    (message.fromMe && message.to === selectedChat.id); // Outgoing in current chat
+                
+                if (isRelevant) {
+                    setMessages(prev => {
+                        // Avoid duplicates if possible (sent messages might trigger twice if not careful)
+                        if (prev.find(m => m.id === message.id)) return prev;
+                        return [...prev, message];
+                    });
                 }
             }
         });
@@ -99,7 +112,7 @@ const WhatsAppStatus = () => {
         return () => {
             s.disconnect();
         };
-    }, [selectedChat]);
+    }, [selectedChat, refetchChats]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -151,6 +164,14 @@ const WhatsAppStatus = () => {
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
+    const handleManualRefresh = () => {
+        refetchStatus();
+        if (status === 'READY') {
+            refetchChats();
+        }
+        toast.info('Refreshing status...');
+    };
+
     return (
         <div className="flex flex-col h-[85vh] animate-in fade-in zoom-in duration-500">
             <div className="flex flex-col lg:flex-row h-full gap-6">
@@ -164,12 +185,17 @@ const WhatsAppStatus = () => {
                                 <IoLogoWhatsapp size={24} />
                                 <h2 className="font-bold text-sm">WhatsApp Client</h2>
                             </div>
-                            <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest ${
-                                status === 'READY' ? 'bg-[#25D366] text-white shadow-[0_0_10px_rgba(37,211,102,0.3)]' : 
-                                status === 'AUTHENTICATING' ? 'bg-yellow-400 text-black' : 'bg-gray-500 text-white'
-                            }`}>
-                                {status.replace(/_/g, ' ')}
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <button onClick={handleManualRefresh} className="hover:rotate-180 transition-all duration-500 p-1" title="Refresh Connection">
+                                    <IoMdRefresh size={18} />
+                                </button>
+                                <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest ${
+                                    status === 'READY' ? 'bg-[#25D366] text-white shadow-[0_0_10px_rgba(37,211,102,0.3)]' : 
+                                    status === 'AUTHENTICATING' ? 'bg-yellow-400 text-black' : 'bg-gray-500 text-white'
+                                }`}>
+                                    {status.replace(/_/g, ' ')}
+                                </span>
+                            </div>
                         </div>
 
                         <div className="p-4 flex flex-col items-center justify-center min-h-[100px]">
@@ -224,9 +250,11 @@ const WhatsAppStatus = () => {
                                     <MdGroups size={32} />
                                     <p className="text-[10px] italic leading-tight">Connect WhatsApp to view chats</p>
                                 </div>
-                            ) : chatsData?.data?.length === 0 ? (
-                                <div className="h-full flex items-center justify-center text-gray-400 text-xs italic p-4 text-center">
-                                    Fetching chats...
+                            ) : (chatsData?.data?.length === 0 || !chatsData) ? (
+                                <div className="h-full flex flex-col items-center justify-center p-6 text-center opacity-50 space-y-3">
+                                    <MdSync className="text-gray-400 animate-spin-slow" size={24} />
+                                    <p className="text-[10px] italic leading-tight">Fetching profile & group chats...</p>
+                                    <button onClick={() => refetchChats()} className="text-[10px] text-[#00a884] font-bold underline">Retry Fetch</button>
                                 </div>
                             ) : (
                                 chatsData?.data?.map((chat: Chat) => (
