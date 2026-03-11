@@ -73,7 +73,7 @@ const WhatsAppStatus = () => {
     }, [historyData, selectedChat]);
 
     useEffect(() => {
-        const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:13077/api/v1/';
+        const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:13077';
         const s: Socket = io(socketUrl);
         setSocket(s);
 
